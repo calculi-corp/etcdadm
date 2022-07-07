@@ -39,10 +39,13 @@ type clientInterface interface {
 	localIP() net.IP
 
 	listVMScaleSetVMs(ctx context.Context) ([]compute.VirtualMachineScaleSetVM, error)
+	listVMScaleSetVMsByName(ctx context.Context, name string) ([]compute.VirtualMachineScaleSetVM, error)
 	getVMScaleSetVM(ctx context.Context, instanceID string) (*compute.VirtualMachineScaleSetVM, error)
 	updateVMScaleSetVM(ctx context.Context, instanceID string, parameters compute.VirtualMachineScaleSetVM) error
 	listDisks(ctx context.Context) ([]compute.Disk, error)
 	listVMSSNetworkInterfaces(ctx context.Context) ([]network.Interface, error)
+	listVMSSNetworkInterfacesByName(ctx context.Context, name string) ([]network.Interface, error)
+	listVMScaleSets(ctx context.Context) ([]compute.VirtualMachineScaleSet, error)
 }
 
 var _ clientInterface = &client{}

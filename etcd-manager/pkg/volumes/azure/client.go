@@ -175,6 +175,17 @@ func (c *client) listVMScaleSetVMs(ctx context.Context) ([]compute.VirtualMachin
 	return l, nil
 }
 
+func (c *client) listVMScaleSetVMsByName(ctx context.Context, name string) ([]compute.VirtualMachineScaleSetVM, error) {
+	var l []compute.VirtualMachineScaleSetVM
+	for iter, err := c.scaleSetVMs.ListComplete(ctx, c.resourceGroupName(), name, "" /* filter */, "" /* selectParameter */, "" /* expand */); iter.NotDone(); err = iter.Next() {
+		if err != nil {
+			return nil, err
+		}
+		l = append(l, iter.Value())
+	}
+	return l, nil
+}
+
 func (c *client) getVMScaleSetVM(ctx context.Context, instanceID string) (*compute.VirtualMachineScaleSetVM, error) {
 	inst, err := c.scaleSetVMs.Get(ctx, c.resourceGroupName(), c.vmScaleSetName(), instanceID, compute.InstanceView)
 	if err != nil {
@@ -205,9 +216,31 @@ func (c *client) listDisks(ctx context.Context) ([]compute.Disk, error) {
 	return l, nil
 }
 
+func (c *client) listVMScaleSets(ctx context.Context) ([]compute.VirtualMachineScaleSet, error) {
+	var l []compute.VirtualMachineScaleSet
+	for iter, err := c.scaleSets.ListComplete(ctx, c.resourceGroupName()); iter.NotDone(); err = iter.Next() {
+		if err != nil {
+			return nil, err
+		}
+		l = append(l, iter.Value())
+	}
+	return l, nil
+}
+
 func (c *client) listVMSSNetworkInterfaces(ctx context.Context) ([]network.Interface, error) {
 	var l []network.Interface
 	for iter, err := c.networkInterfaces.ListVirtualMachineScaleSetNetworkInterfacesComplete(ctx, c.resourceGroupName(), c.vmScaleSetName()); iter.NotDone(); err = iter.Next() {
+		if err != nil {
+			return nil, err
+		}
+		l = append(l, iter.Value())
+	}
+	return l, nil
+}
+
+func (c *client) listVMSSNetworkInterfacesByName(ctx context.Context, name string) ([]network.Interface, error) {
+	var l []network.Interface
+	for iter, err := c.networkInterfaces.ListVirtualMachineScaleSetNetworkInterfacesComplete(ctx, c.resourceGroupName(), name); iter.NotDone(); err = iter.Next() {
 		if err != nil {
 			return nil, err
 		}
