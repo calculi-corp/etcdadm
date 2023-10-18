@@ -29,7 +29,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
-	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -40,7 +39,8 @@ import (
 // https://docs.aws.amazon.com/general/latest/gr/s3.html
 // TODO: match fips and S3 access point naming conventions
 // TODO: perhaps make region regex more specific, i.e. (us|eu|ap|cn|ca|sa), to prevent matching bucket names that match region format?
-//       but that will mean updating this list when AWS introduces new regions
+//
+//	but that will mean updating this list when AWS introduces new regions
 var s3UrlRegexp = regexp.MustCompile(`(s3([-.](?P<region>\w{2}(-gov)?-\w+-\d{1})|[-.](?P<bucket>[\w.\-\_]+)|)?|(?P<bucket>[\w.\-\_]+)[.]s3([.-](?P<region>\w{2}(-gov)?-\w+-\d{1}))?)[.]amazonaws[.]com([.]cn)?(?P<path>.*)?`)
 
 type S3BucketDetails struct {
@@ -87,7 +87,7 @@ func (s *S3Context) getClient(region string) (*s3.S3, error) {
 			config = config.WithCredentialsChainVerboseErrors(true)
 		} else {
 			// Use customized S3 storage
-			klog.Infof("Found S3_ENDPOINT=%q, using as non-AWS S3 backend", endpoint)
+			klog.V(2).Infof("Found S3_ENDPOINT=%q, using as non-AWS S3 backend", endpoint)
 			config, err = getCustomS3Config(endpoint, region)
 			if err != nil {
 				return nil, err
@@ -172,10 +172,6 @@ func (s *S3Context) getDetailsForBucket(bucket string) (*S3BucketDetails, error)
 	if awsRegion == "" {
 		awsRegion = "us-east-1"
 		klog.V(2).Infof("defaulting region to %q", awsRegion)
-	}
-
-	if err := validateRegion(awsRegion); err != nil {
-		return bucketDetails, err
 	}
 
 	request := &s3.GetBucketLocationInput{
@@ -367,19 +363,6 @@ func getRegionFromMetadata() (string, error) {
 	}
 
 	return metadataRegion, nil
-}
-
-func validateRegion(region string) error {
-	resolver := endpoints.DefaultResolver()
-	partitions := resolver.(endpoints.EnumPartitions).Partitions()
-	for _, p := range partitions {
-		for _, r := range p.Regions() {
-			if r.ID() == region {
-				return nil
-			}
-		}
-	}
-	return fmt.Errorf("%s is not a valid region\nPlease check that your region is formatted correctly (e.g. us-east-1)", region)
 }
 
 func VFSPath(url string) (string, error) {
